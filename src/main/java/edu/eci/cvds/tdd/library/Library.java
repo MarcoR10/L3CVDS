@@ -1,9 +1,10 @@
 package edu.eci.cvds.tdd;
 
 import edu.eci.cvds.tdd.library.book.Book;
-import edu.eci.cvds.tdd.library.loan.Loan;
+import edu.eci.cvds.tdd.library.loan.*;
 import edu.eci.cvds.tdd.library.user.User;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,8 +36,15 @@ public class Library {
      * @return true if the book was stored false otherwise.
      */
     public boolean addBook(Book book) {
-        //TODO Implement the logic to add a new book into the map.
-        return false;
+        if (book == null) {
+            return false;
+        }
+        if (books.containsKey(book)) {
+            books.put(book, books.get(book) + 1);
+        } else {
+            books.put(book, 1);
+        }
+        return true;
     }
 
     /**
@@ -53,9 +61,48 @@ public class Library {
      * @return The new created loan.
      */
     public Loan loanABook(String userId, String isbn) {
-        //TODO Implement the login of loan a book to a user based on the UserId and the isbn.
-        return null;
+        User user = null;
+        for (User u : users) {
+            if (u.getId().equals(userId)) {
+                user = u;
+                break;
+            }
+        }
+        if (user == null) {
+            return null;
+        }
+
+        Book book = null;
+        for (Book b : books.keySet()) {
+            if (b.getIsbn().equals(isbn)) {
+                book = b;
+                break;
+            }
+        }
+        if (book == null || books.get(book) == 0) {
+            return null;
+        }
+
+        for (Loan loan : loans) {
+            if (loan.getUser().getId().equals(userId) && loan.getBook().getIsbn().equals(isbn) && loan.getStatus() == LoanStatus.ACTIVE) {
+                return null;
+            }
+        }
+
+        Loan newLoan = new Loan();
+        newLoan.setUser(user);
+        newLoan.setBook(book);
+        newLoan.setLoanDate(LocalDateTime.now());
+        newLoan.setStatus(LoanStatus.ACTIVE);
+
+        loans.add(newLoan);
+
+        books.put(book, books.get(book) - 1);
+
+        return newLoan;
     }
+
+
 
     /**
      * This method return a loan, meaning that the amount of books should be increased by 1, the status of the Loan
@@ -67,8 +114,14 @@ public class Library {
      * @return the loan with the RETURNED status.
      */
     public Loan returnLoan(Loan loan) {
-        //TODO Implement the login of loan a book to a user based on the UserId and the isbn.
-        return null;
+        if (loan == null || loan.getStatus() == LoanStatus.RETURNED) {
+            return null; //
+        }
+        loan.setStatus(LoanStatus.RETURNED);
+        loan.setReturnDate(java.time.LocalDateTime.now());
+        Book book = loan.getBook();
+        books.put(book, books.getOrDefault(book, 0) + 1);
+        return loan;
     }
 
     public boolean addUser(User user) {
